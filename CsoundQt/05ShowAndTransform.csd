@@ -1,81 +1,198 @@
 <CsoundSynthesizer>
 <CsOptions>
--odac
+-odac -m128
 </CsOptions>
 <CsInstruments>
+ksmps = 128
 
 ;make sure INScore receives OSC messages on this port
-giSendPort  =        7000
+giSendPort =          7000
 
-  instr Hello
+  opcode StrLineBreak, S, Si
+;inserts line breaks after iNum characters in the input string
+String, iNum xin
+Sres       =          ""
+loop:
+ilen       strlen     String
+ if ilen > iNum then
+S1         strsub     String, 0, iNum
+Sres       strcat     Sres, S1
+Sres       strcat     Sres, "\n"
+String     strsub     String, iNum
+           igoto      loop
+           else
+Sres       strcat     Sres, String
+ endif
+           xout       Sres
+  endop
+
+
+  instr RunForLive
+  
 ;delete previous contents in /ITL/scene on localhost
-Sdelmsg sprintf  "/ITL/scene/%s","*"
-        OSCsend  1,"", giSendPort, Sdelmsg, "s", "del"
-;load image
-SrootPath  pwd
-           OSCsend    1,"", giSendPort, "/ITL", "ss", "rootPath", SrootPath
-        OSCsend  1,"", giSendPort, "/ITL/scene/img", "sss", "set", "img", "../csconf.jpg"
-        
-kScale invalue "scale"
-kX invalue "x"
-kY invalue "y"
-kAngle invalue "angle"
-kRotateX invalue "rotatex"
-kRotateY invalue "rotatey"
-kRotateZ invalue "rotatez"
-kShearX invalue "shearx"
-kShearY invalue "sheary"
+Sdelmsg    sprintf    "/ITL/scene/%s","*"
+           OSCsend    1,"", giSendPort, Sdelmsg, "s", "del"
+           
+;set root path
+gSrootPath pwd
+           OSCsend    1,"", giSendPort, "/ITL", "ss", "rootPath", gSrootPath
 
-kMetro metro 10
-  if kMetro == 1 then
-        OSCsend  kScale,"", giSendPort, "/ITL/scene/img", "sf", "scale", kScale
-        OSCsend  kX,"", giSendPort, "/ITL/scene/img", "sf", "x", kX
-        OSCsend  kY,"", giSendPort, "/ITL/scene/img", "sf", "y", kY
-        OSCsend  kAngle,"", giSendPort, "/ITL/scene/img", "sf", "angle", kAngle
-        OSCsend  kRotateX,"", giSendPort, "/ITL/scene/img", "sf", "rotatex", kRotateX
-        OSCsend  kRotateY,"", giSendPort, "/ITL/scene/img", "sf", "rotatey", kRotateY
-        OSCsend  kRotateZ,"", giSendPort, "/ITL/scene/img", "sf", "rotatez", kRotateZ
-        OSCsend  kShearX,"", giSendPort, "/ITL/scene/img", "sff", "shear", kShearX, kShearY
-        OSCsend  kShearY, "", giSendPort, "/ITL/scene/img", "sff", "shear", kShearX, kShearY
+;receive GUI input for transformations
+gkScale    invalue    "scale"
+gkX        invalue    "x"
+gkY        invalue    "y"
+gkAngle    invalue    "angle"
+gkRotateX  invalue    "rotatex"
+gkRotateY  invalue    "rotatey"
+gkRotateZ  invalue    "rotatez"
+gkShearX   invalue    "shearx"
+gkShearY   invalue    "sheary"
+
+;live input text
+SText      invalue    "intext"
+kBreakLines invalue   "breaklines"
+kTextLen   strlenk    SText
+kNewText   changed    kTextLen
+ktimek     timek
+  if ktimek > 1 then ;avoid triggering the Text instr at first k-cycle
+    if kNewText == 1 then
+      if kBreakLines == 1 then
+           reinit     linebreak
+linebreak:
+gSText     StrLineBreak SText, 12
+           rireturn
+      else
+gSText     strcpyk    SText
+      endif
+           event      "i", "Text", 0, 1
+    endif
   endif
-;send text
-        ;OSCsend  1,"", giPort, "/ITL/scene/text", "sss", "set", "txt", "Hello Csound!"
-;scale (enlarge)
-        ;OSCsend  1,"", giPort, "/ITL/scene/text", "sf", "scale", 5
+
+;select text, image or score
+kText      invalue    "text"
+kImage     invalue    "image"
+kScore     invalue    "score"
+
+;see if they have changed their status
+kTextChng  changed    kText
+kImageChng changed    kImage
+kScoreChng changed    kScore
+
+;activate or deactivate them via latch button
+  if kTextChng == 1 then
+    if kText == 1 then
+           event      "i", "Text", 0, 1
+    else
+           event      "i", "TextDel", 0, 1
+    endif
+  endif
+  if kImageChng == 1 then
+    if kImage == 1 then
+           event      "i", "Image", 0, 1
+    else
+           event      "i", "ImageDel", 0, 1
+    endif
+  endif
+  if kScoreChng == 1 then
+    if kScore == 1 then
+           event      "i", "Score", 0, 1
+    else
+           event      "i", "ScoreDel", 0, 1
+    endif
+  endif
+
+;send the transformations to the Transform instrument
+kMetro     metro      10 ;refresh rate
+  if kMetro == 1 then
+    if kText == 1 then
+           event      "i", "Transform", 0, 1, 1
+    endif
+    if kImage == 1 then
+           event      "i", "Transform", 0, 1, 2
+    endif
+    if kScore == 1 then
+           event      "i", "Transform", 0, 1, 3
+    endif
+  endif
   endin
-  
+
+  instr Text
+           OSCsend    1,"", giSendPort, "/ITL/scene/txt", "sss", "set", "txt", gSText
+           turnoff
+  endin
+
+  instr TextDel
+           OSCsend    1,"", giSendPort, "/ITL/scene/txt", "s", "del"
+           turnoff
+  endin
+
+  instr Image
+           OSCsend    1,"", giSendPort, "/ITL/scene/img", "sss", "set", "img", "../rsrc/csconf.jpg"
+           turnoff
+  endin
+
+  instr ImageDel
+           OSCsend    1,"", giSendPort, "/ITL/scene/img", "s", "del"
+           turnoff
+  endin
+
+  instr Score
+           OSCsend    1,"", giSendPort, "/ITL/scene/sco", "sss", "set", "gmnf", "../rsrc/1voice-846_2f.gmn"
+           turnoff
+  endin
+
+  instr ScoreDel
+           OSCsend    1,"", giSendPort, "/ITL/scene/sco", "s", "del"
+           turnoff
+  endin
+
+  instr Transform
+iWhich     =          p4
+  if iWhich == 1 then
+Starget    =          "/ITL/scene/txt"
+  elseif iWhich == 2 then
+Starget    =          "/ITL/scene/img"
+  elseif iWhich == 3 then
+Starget    =          "/ITL/scene/sco"
+  endif
+           OSCsend    1,"", giSendPort, Starget, "sf", "scale", gkScale
+           OSCsend    1,"", giSendPort, Starget, "sf", "x", gkX
+           OSCsend    1,"", giSendPort, Starget, "sf", "y", gkY
+           OSCsend    1,"", giSendPort, Starget, "sf", "angle", gkAngle
+           OSCsend    1,"", giSendPort, Starget, "sf", "rotatex", gkRotateX
+           OSCsend    1,"", giSendPort, Starget, "sf", "rotatey", gkRotateY
+           OSCsend    1,"", giSendPort, Starget, "sf", "rotatez", gkRotateZ
+           OSCsend    1,"", giSendPort, Starget, "sff", "shear", gkShearX, gkShearY
+           OSCsend    1, "", giSendPort, Starget, "sff", "shear", gkShearX, gkShearY
+           turnoff
+  endin
+
   instr Reset
-outvalue "scale", 1
-outvalue "x", 0
-outvalue "y", 0
-outvalue "angle", 0
-outvalue "rotatex", 0
-outvalue "rotatey", 0
-outvalue "rotatez", 0
-outvalue "shearx", 0
-outvalue "sheary", 0
-turnoff
+           outvalue   "scale", 1
+           outvalue   "x", 0
+           outvalue   "y", 0
+           outvalue   "angle", 0
+           outvalue   "rotatex", 0
+           outvalue   "rotatey", 0
+           outvalue   "rotatez", 0
+           outvalue   "shearx", 0
+           outvalue   "sheary", 0
+           turnoff
   endin
-  
-  instr ClearImage
-Sdelmsg sprintf  "/ITL/scene/%s","*"
-        OSCsend  1,"", giSendPort, Sdelmsg, "s", "del"
-        turnoff	
-  endin
-  
-  
+
+
 </CsInstruments>
 <CsScore>
-i "Hello" 0 99999
+i "RunForLive" 0 99999
 </CsScore>
 </CsoundSynthesizer>
 <bsbPanel>
  <label>Widgets</label>
  <objectName/>
- <x>196</x>
- <y>100</y>
- <width>458</width>
- <height>389</height>
+ <x>213</x>
+ <y>127</y>
+ <width>505</width>
+ <height>536</height>
  <visible>true</visible>
  <uuid/>
  <bgcolor mode="background">
@@ -85,9 +202,9 @@ i "Hello" 0 99999
  </bgcolor>
  <bsbObject version="2" type="BSBLabel">
   <objectName/>
-  <x>25</x>
+  <x>23</x>
   <y>4</y>
-  <width>383</width>
+  <width>433</width>
   <height>39</height>
   <uuid>{2b129b39-93ca-48a3-9a33-9dbabe9818ef}</uuid>
   <visible>true</visible>
@@ -112,28 +229,10 @@ i "Hello" 0 99999
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBHSlider">
-  <objectName>scale</objectName>
-  <x>104</x>
-  <y>131</y>
-  <width>275</width>
-  <height>24</height>
-  <uuid>{d5a255d7-799d-43b4-bb87-84653ca0b94a}</uuid>
-  <visible>true</visible>
-  <midichan>0</midichan>
-  <midicc>0</midicc>
-  <minimum>0.10000000</minimum>
-  <maximum>2.00000000</maximum>
-  <value>1.00000000</value>
-  <mode>lin</mode>
-  <mouseControl act="jump">continuous</mouseControl>
-  <resolution>-1.00000000</resolution>
-  <randomizable group="0">false</randomizable>
- </bsbObject>
  <bsbObject version="2" type="BSBLabel">
   <objectName/>
-  <x>23</x>
-  <y>130</y>
+  <x>24</x>
+  <y>155</y>
   <width>80</width>
   <height>25</height>
   <uuid>{f7a775f0-7895-4902-92b3-0ddcaead988e}</uuid>
@@ -159,28 +258,10 @@ i "Hello" 0 99999
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBHSlider">
-  <objectName>x</objectName>
-  <x>103</x>
-  <y>162</y>
-  <width>275</width>
-  <height>24</height>
-  <uuid>{0f487aba-8cf2-4d98-9fc1-f47e91515234}</uuid>
-  <visible>true</visible>
-  <midichan>0</midichan>
-  <midicc>0</midicc>
-  <minimum>-1.00000000</minimum>
-  <maximum>1.00000000</maximum>
-  <value>0.00000000</value>
-  <mode>lin</mode>
-  <mouseControl act="jump">continuous</mouseControl>
-  <resolution>-1.00000000</resolution>
-  <randomizable group="0">false</randomizable>
- </bsbObject>
  <bsbObject version="2" type="BSBLabel">
   <objectName/>
-  <x>22</x>
-  <y>161</y>
+  <x>24</x>
+  <y>186</y>
   <width>80</width>
   <height>25</height>
   <uuid>{3f64ffac-a28e-49f7-a98a-49a7bdd6c937}</uuid>
@@ -206,28 +287,10 @@ i "Hello" 0 99999
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBHSlider">
-  <objectName>y</objectName>
-  <x>103</x>
-  <y>193</y>
-  <width>275</width>
-  <height>24</height>
-  <uuid>{c7a3ca2e-d854-4d61-93b6-4b56369acfb5}</uuid>
-  <visible>true</visible>
-  <midichan>0</midichan>
-  <midicc>0</midicc>
-  <minimum>-1.00000000</minimum>
-  <maximum>1.00000000</maximum>
-  <value>0.00000000</value>
-  <mode>lin</mode>
-  <mouseControl act="jump">continuous</mouseControl>
-  <resolution>-1.00000000</resolution>
-  <randomizable group="0">false</randomizable>
- </bsbObject>
  <bsbObject version="2" type="BSBLabel">
   <objectName/>
-  <x>22</x>
-  <y>192</y>
+  <x>24</x>
+  <y>217</y>
   <width>80</width>
   <height>28</height>
   <uuid>{ec0f69b7-e4a5-4c40-9fa8-7dbdf7e987a3}</uuid>
@@ -253,28 +316,10 @@ i "Hello" 0 99999
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBHSlider">
-  <objectName>angle</objectName>
-  <x>102</x>
-  <y>223</y>
-  <width>275</width>
-  <height>24</height>
-  <uuid>{76d5c3af-c535-4941-a5ee-4e84e36f6f42}</uuid>
-  <visible>true</visible>
-  <midichan>0</midichan>
-  <midicc>0</midicc>
-  <minimum>-180.00000000</minimum>
-  <maximum>180.00000000</maximum>
-  <value>0.00000000</value>
-  <mode>lin</mode>
-  <mouseControl act="jump">continuous</mouseControl>
-  <resolution>-1.00000000</resolution>
-  <randomizable group="0">false</randomizable>
- </bsbObject>
  <bsbObject version="2" type="BSBLabel">
   <objectName/>
-  <x>21</x>
-  <y>222</y>
+  <x>24</x>
+  <y>247</y>
   <width>80</width>
   <height>28</height>
   <uuid>{897e7634-bb2f-4c03-8805-778ebe3fdc4d}</uuid>
@@ -300,28 +345,10 @@ i "Hello" 0 99999
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
- <bsbObject version="2" type="BSBHSlider">
-  <objectName>rotatex</objectName>
-  <x>101</x>
-  <y>254</y>
-  <width>275</width>
-  <height>24</height>
-  <uuid>{73561d28-070d-41d2-a8cd-c8bb5793a3c5}</uuid>
-  <visible>true</visible>
-  <midichan>0</midichan>
-  <midicc>0</midicc>
-  <minimum>-180.00000000</minimum>
-  <maximum>180.00000000</maximum>
-  <value>0.00000000</value>
-  <mode>lin</mode>
-  <mouseControl act="jump">continuous</mouseControl>
-  <resolution>-1.00000000</resolution>
-  <randomizable group="0">false</randomizable>
- </bsbObject>
  <bsbObject version="2" type="BSBLabel">
   <objectName/>
-  <x>20</x>
-  <y>253</y>
+  <x>24</x>
+  <y>278</y>
   <width>80</width>
   <height>25</height>
   <uuid>{9e23ac50-97c6-4efc-9f15-65251d8897f9}</uuid>
@@ -349,8 +376,8 @@ i "Hello" 0 99999
  </bsbObject>
  <bsbObject version="2" type="BSBSpinBox">
   <objectName>rotatex</objectName>
-  <x>375</x>
-  <y>253</y>
+  <x>378</x>
+  <y>278</y>
   <width>79</width>
   <height>26</height>
   <uuid>{08b412a2-9c1d-48ec-a25d-396167834209}</uuid>
@@ -376,28 +403,10 @@ i "Hello" 0 99999
   <randomizable group="0">false</randomizable>
   <value>0</value>
  </bsbObject>
- <bsbObject version="2" type="BSBHSlider">
-  <objectName>rotatey</objectName>
-  <x>101</x>
-  <y>280</y>
-  <width>275</width>
-  <height>24</height>
-  <uuid>{69603777-bf5b-48ec-9091-aedbef348857}</uuid>
-  <visible>true</visible>
-  <midichan>0</midichan>
-  <midicc>0</midicc>
-  <minimum>-180.00000000</minimum>
-  <maximum>180.00000000</maximum>
-  <value>0.00000000</value>
-  <mode>lin</mode>
-  <mouseControl act="jump">continuous</mouseControl>
-  <resolution>-1.00000000</resolution>
-  <randomizable group="0">false</randomizable>
- </bsbObject>
  <bsbObject version="2" type="BSBLabel">
   <objectName/>
-  <x>20</x>
-  <y>279</y>
+  <x>24</x>
+  <y>304</y>
   <width>80</width>
   <height>25</height>
   <uuid>{a1afcbcd-d48f-43e8-90d6-24f82240792e}</uuid>
@@ -425,8 +434,8 @@ i "Hello" 0 99999
  </bsbObject>
  <bsbObject version="2" type="BSBSpinBox">
   <objectName>rotatey</objectName>
-  <x>375</x>
-  <y>279</y>
+  <x>378</x>
+  <y>304</y>
   <width>79</width>
   <height>26</height>
   <uuid>{0a7ee821-af3c-4106-a9dc-25f3e8fd9f76}</uuid>
@@ -452,28 +461,10 @@ i "Hello" 0 99999
   <randomizable group="0">false</randomizable>
   <value>0</value>
  </bsbObject>
- <bsbObject version="2" type="BSBHSlider">
-  <objectName>rotatez</objectName>
-  <x>101</x>
-  <y>306</y>
-  <width>275</width>
-  <height>24</height>
-  <uuid>{b50a3dc3-6ce5-41c7-b83e-4292a28f165e}</uuid>
-  <visible>true</visible>
-  <midichan>0</midichan>
-  <midicc>0</midicc>
-  <minimum>-180.00000000</minimum>
-  <maximum>180.00000000</maximum>
-  <value>0.00000000</value>
-  <mode>lin</mode>
-  <mouseControl act="jump">continuous</mouseControl>
-  <resolution>-1.00000000</resolution>
-  <randomizable group="0">false</randomizable>
- </bsbObject>
  <bsbObject version="2" type="BSBLabel">
   <objectName/>
-  <x>20</x>
-  <y>305</y>
+  <x>24</x>
+  <y>330</y>
   <width>80</width>
   <height>25</height>
   <uuid>{3af119a6-5329-4d7b-85f1-eb6fc7a9e3d2}</uuid>
@@ -501,8 +492,8 @@ i "Hello" 0 99999
  </bsbObject>
  <bsbObject version="2" type="BSBSpinBox">
   <objectName>rotatez</objectName>
-  <x>375</x>
-  <y>305</y>
+  <x>378</x>
+  <y>330</y>
   <width>79</width>
   <height>26</height>
   <uuid>{0eea33d9-09a6-4a99-a996-9924beaf27f0}</uuid>
@@ -528,28 +519,10 @@ i "Hello" 0 99999
   <randomizable group="0">false</randomizable>
   <value>0</value>
  </bsbObject>
- <bsbObject version="2" type="BSBHSlider">
-  <objectName>shearx</objectName>
-  <x>101</x>
-  <y>338</y>
-  <width>275</width>
-  <height>24</height>
-  <uuid>{aa93b0b9-4ad1-4892-abc8-78fa13b75d4e}</uuid>
-  <visible>true</visible>
-  <midichan>0</midichan>
-  <midicc>0</midicc>
-  <minimum>-2.00000000</minimum>
-  <maximum>2.00000000</maximum>
-  <value>0.00000000</value>
-  <mode>lin</mode>
-  <mouseControl act="jump">continuous</mouseControl>
-  <resolution>-1.00000000</resolution>
-  <randomizable group="0">false</randomizable>
- </bsbObject>
  <bsbObject version="2" type="BSBLabel">
   <objectName/>
-  <x>20</x>
-  <y>337</y>
+  <x>24</x>
+  <y>362</y>
   <width>80</width>
   <height>25</height>
   <uuid>{7354360b-2845-4b1c-9314-3cd5e10df89a}</uuid>
@@ -577,8 +550,8 @@ i "Hello" 0 99999
  </bsbObject>
  <bsbObject version="2" type="BSBSpinBox">
   <objectName>shearx</objectName>
-  <x>375</x>
-  <y>337</y>
+  <x>378</x>
+  <y>362</y>
   <width>79</width>
   <height>26</height>
   <uuid>{e0e38087-44cd-4c1a-a425-242cea52ce28}</uuid>
@@ -604,28 +577,10 @@ i "Hello" 0 99999
   <randomizable group="0">false</randomizable>
   <value>0</value>
  </bsbObject>
- <bsbObject version="2" type="BSBHSlider">
-  <objectName>sheary</objectName>
-  <x>101</x>
-  <y>364</y>
-  <width>275</width>
-  <height>24</height>
-  <uuid>{6c9d468a-b4d8-46b3-b4c7-bdd0a83f630c}</uuid>
-  <visible>true</visible>
-  <midichan>0</midichan>
-  <midicc>0</midicc>
-  <minimum>-2.00000000</minimum>
-  <maximum>2.00000000</maximum>
-  <value>0.00000000</value>
-  <mode>lin</mode>
-  <mouseControl act="jump">continuous</mouseControl>
-  <resolution>-1.00000000</resolution>
-  <randomizable group="0">false</randomizable>
- </bsbObject>
  <bsbObject version="2" type="BSBLabel">
   <objectName/>
-  <x>20</x>
-  <y>363</y>
+  <x>24</x>
+  <y>388</y>
   <width>80</width>
   <height>25</height>
   <uuid>{62631204-dce0-4d4e-88cc-4e47545f51c8}</uuid>
@@ -653,8 +608,8 @@ i "Hello" 0 99999
  </bsbObject>
  <bsbObject version="2" type="BSBSpinBox">
   <objectName>sheary</objectName>
-  <x>375</x>
-  <y>363</y>
+  <x>378</x>
+  <y>388</y>
   <width>79</width>
   <height>26</height>
   <uuid>{7d2248cf-0d08-45a1-979d-e93e947ef0d3}</uuid>
@@ -682,8 +637,8 @@ i "Hello" 0 99999
  </bsbObject>
  <bsbObject version="2" type="BSBSpinBox">
   <objectName>scale</objectName>
-  <x>379</x>
-  <y>130</y>
+  <x>380</x>
+  <y>155</y>
   <width>79</width>
   <height>26</height>
   <uuid>{5421dce4-fe4a-40bd-9e3f-c31993df525d}</uuid>
@@ -711,8 +666,8 @@ i "Hello" 0 99999
  </bsbObject>
  <bsbObject version="2" type="BSBSpinBox">
   <objectName>x</objectName>
-  <x>377</x>
-  <y>161</y>
+  <x>378</x>
+  <y>186</y>
   <width>79</width>
   <height>26</height>
   <uuid>{4f989918-dd11-48b4-8f34-64e4bff20963}</uuid>
@@ -740,8 +695,8 @@ i "Hello" 0 99999
  </bsbObject>
  <bsbObject version="2" type="BSBSpinBox">
   <objectName>y</objectName>
-  <x>377</x>
-  <y>192</y>
+  <x>378</x>
+  <y>217</y>
   <width>79</width>
   <height>26</height>
   <uuid>{5fa7ebed-7cd2-4355-92a2-090b5339df6d}</uuid>
@@ -769,8 +724,8 @@ i "Hello" 0 99999
  </bsbObject>
  <bsbObject version="2" type="BSBSpinBox">
   <objectName>angle</objectName>
-  <x>376</x>
-  <y>222</y>
+  <x>378</x>
+  <y>247</y>
   <width>79</width>
   <height>26</height>
   <uuid>{8bb9ab6d-ad83-43f5-a2bd-134552aa2e76}</uuid>
@@ -798,10 +753,10 @@ i "Hello" 0 99999
  </bsbObject>
  <bsbObject version="2" type="BSBButton">
   <objectName>button28</objectName>
-  <x>358</x>
-  <y>89</y>
-  <width>100</width>
-  <height>30</height>
+  <x>307</x>
+  <y>123</y>
+  <width>150</width>
+  <height>26</height>
   <uuid>{41a4804c-7e5e-493e-b389-5c19a5f638a5}</uuid>
   <visible>true</visible>
   <midichan>0</midichan>
@@ -809,30 +764,330 @@ i "Hello" 0 99999
   <type>event</type>
   <pressedValue>1.00000000</pressedValue>
   <stringvalue/>
-  <text>Reset all</text>
+  <text>Reset all parameters</text>
   <image>/</image>
   <eventLine>i "Reset" 0 1</eventLine>
   <latch>false</latch>
-  <latched>true</latched>
+  <latched>false</latched>
  </bsbObject>
  <bsbObject version="2" type="BSBButton">
-  <objectName>button28</objectName>
-  <x>248</x>
+  <objectName>text</objectName>
+  <x>172</x>
   <y>87</y>
-  <width>100</width>
+  <width>63</width>
   <height>30</height>
-  <uuid>{e8c277e7-5bc5-4aae-b07b-17fa6908c8f4}</uuid>
+  <uuid>{e251ae93-0de9-4584-b53d-a5940c798c48}</uuid>
   <visible>true</visible>
   <midichan>0</midichan>
   <midicc>0</midicc>
-  <type>event</type>
+  <type>value</type>
   <pressedValue>1.00000000</pressedValue>
   <stringvalue/>
-  <text>Clear image</text>
+  <text>Text</text>
   <image>/</image>
   <eventLine>i "ClearImage" 0 1</eventLine>
-  <latch>false</latch>
-  <latched>true</latched>
+  <latch>true</latch>
+  <latched>false</latched>
+ </bsbObject>
+ <bsbObject version="2" type="BSBButton">
+  <objectName>image</objectName>
+  <x>245</x>
+  <y>87</y>
+  <width>63</width>
+  <height>30</height>
+  <uuid>{dedd70d6-7b81-4e9a-a20c-f2b5a5d1f95a}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <type>value</type>
+  <pressedValue>1.00000000</pressedValue>
+  <stringvalue/>
+  <text>Image</text>
+  <image>/</image>
+  <eventLine>i "ClearImage" 0 1</eventLine>
+  <latch>true</latch>
+  <latched>false</latched>
+ </bsbObject>
+ <bsbObject version="2" type="BSBButton">
+  <objectName>score</objectName>
+  <x>316</x>
+  <y>87</y>
+  <width>63</width>
+  <height>30</height>
+  <uuid>{a8bba1ba-2e38-475f-b2ec-6bae48e23efd}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <type>value</type>
+  <pressedValue>1.00000000</pressedValue>
+  <stringvalue/>
+  <text>Score</text>
+  <image>/</image>
+  <eventLine>i "ClearImage" 0 1</eventLine>
+  <latch>true</latch>
+  <latched>false</latched>
+ </bsbObject>
+ <bsbObject version="2" type="BSBHSlider">
+  <objectName>scale</objectName>
+  <x>105</x>
+  <y>156</y>
+  <width>275</width>
+  <height>24</height>
+  <uuid>{d5a255d7-799d-43b4-bb87-84653ca0b94a}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <minimum>0.10000000</minimum>
+  <maximum>2.00000000</maximum>
+  <value>1.00000000</value>
+  <mode>lin</mode>
+  <mouseControl act="jump">continuous</mouseControl>
+  <resolution>-1.00000000</resolution>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject version="2" type="BSBHSlider">
+  <objectName>x</objectName>
+  <x>105</x>
+  <y>187</y>
+  <width>275</width>
+  <height>24</height>
+  <uuid>{0f487aba-8cf2-4d98-9fc1-f47e91515234}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <minimum>-1.00000000</minimum>
+  <maximum>1.00000000</maximum>
+  <value>0.00000000</value>
+  <mode>lin</mode>
+  <mouseControl act="jump">continuous</mouseControl>
+  <resolution>-1.00000000</resolution>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject version="2" type="BSBHSlider">
+  <objectName>y</objectName>
+  <x>105</x>
+  <y>218</y>
+  <width>275</width>
+  <height>24</height>
+  <uuid>{c7a3ca2e-d854-4d61-93b6-4b56369acfb5}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <minimum>-1.00000000</minimum>
+  <maximum>1.00000000</maximum>
+  <value>0.00000000</value>
+  <mode>lin</mode>
+  <mouseControl act="jump">continuous</mouseControl>
+  <resolution>-1.00000000</resolution>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject version="2" type="BSBHSlider">
+  <objectName>angle</objectName>
+  <x>105</x>
+  <y>248</y>
+  <width>275</width>
+  <height>24</height>
+  <uuid>{76d5c3af-c535-4941-a5ee-4e84e36f6f42}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <minimum>-180.00000000</minimum>
+  <maximum>180.00000000</maximum>
+  <value>0.00000000</value>
+  <mode>lin</mode>
+  <mouseControl act="jump">continuous</mouseControl>
+  <resolution>-1.00000000</resolution>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject version="2" type="BSBHSlider">
+  <objectName>rotatex</objectName>
+  <x>105</x>
+  <y>279</y>
+  <width>275</width>
+  <height>24</height>
+  <uuid>{73561d28-070d-41d2-a8cd-c8bb5793a3c5}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <minimum>-180.00000000</minimum>
+  <maximum>180.00000000</maximum>
+  <value>0.00000000</value>
+  <mode>lin</mode>
+  <mouseControl act="jump">continuous</mouseControl>
+  <resolution>-1.00000000</resolution>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject version="2" type="BSBHSlider">
+  <objectName>rotatey</objectName>
+  <x>105</x>
+  <y>305</y>
+  <width>275</width>
+  <height>24</height>
+  <uuid>{69603777-bf5b-48ec-9091-aedbef348857}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <minimum>-180.00000000</minimum>
+  <maximum>180.00000000</maximum>
+  <value>0.00000000</value>
+  <mode>lin</mode>
+  <mouseControl act="jump">continuous</mouseControl>
+  <resolution>-1.00000000</resolution>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject version="2" type="BSBHSlider">
+  <objectName>rotatez</objectName>
+  <x>105</x>
+  <y>331</y>
+  <width>275</width>
+  <height>24</height>
+  <uuid>{b50a3dc3-6ce5-41c7-b83e-4292a28f165e}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <minimum>-180.00000000</minimum>
+  <maximum>180.00000000</maximum>
+  <value>0.00000000</value>
+  <mode>lin</mode>
+  <mouseControl act="jump">continuous</mouseControl>
+  <resolution>-1.00000000</resolution>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject version="2" type="BSBHSlider">
+  <objectName>shearx</objectName>
+  <x>105</x>
+  <y>363</y>
+  <width>275</width>
+  <height>24</height>
+  <uuid>{aa93b0b9-4ad1-4892-abc8-78fa13b75d4e}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <minimum>-2.00000000</minimum>
+  <maximum>2.00000000</maximum>
+  <value>0.00000000</value>
+  <mode>lin</mode>
+  <mouseControl act="jump">continuous</mouseControl>
+  <resolution>-1.00000000</resolution>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject version="2" type="BSBHSlider">
+  <objectName>sheary</objectName>
+  <x>105</x>
+  <y>389</y>
+  <width>275</width>
+  <height>24</height>
+  <uuid>{6c9d468a-b4d8-46b3-b4c7-bdd0a83f630c}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <minimum>-2.00000000</minimum>
+  <maximum>2.00000000</maximum>
+  <value>0.00000000</value>
+  <mode>lin</mode>
+  <mouseControl act="jump">continuous</mouseControl>
+  <resolution>-1.00000000</resolution>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject version="2" type="BSBLineEdit">
+  <objectName>intext</objectName>
+  <x>22</x>
+  <y>49</y>
+  <width>436</width>
+  <height>31</height>
+  <uuid>{80c4dafe-bfa2-40e6-9d42-3d2b7f31ed6a}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>Type your text here</label>
+  <alignment>left</alignment>
+  <font>Arial</font>
+  <fontsize>14</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>206</r>
+   <g>206</g>
+   <b>206</b>
+  </bgcolor>
+  <background>nobackground</background>
+ </bsbObject>
+ <bsbObject version="2" type="BSBCheckBox">
+  <objectName>breaklines</objectName>
+  <x>23</x>
+  <y>124</y>
+  <width>20</width>
+  <height>20</height>
+  <uuid>{5db8a409-0a09-4eca-bedb-9f2775369563}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <selected>false</selected>
+  <label/>
+  <pressedValue>1</pressedValue>
+  <randomizable group="0">false</randomizable>
+ </bsbObject>
+ <bsbObject version="2" type="BSBLabel">
+  <objectName/>
+  <x>43</x>
+  <y>123</y>
+  <width>154</width>
+  <height>23</height>
+  <uuid>{3989aae6-abc1-4875-bffd-7f6301441bfb}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>break lines in text input</label>
+  <alignment>left</alignment>
+  <font>Arial</font>
+  <fontsize>12</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
+ </bsbObject>
+ <bsbObject version="2" type="BSBLabel">
+  <objectName/>
+  <x>22</x>
+  <y>88</y>
+  <width>146</width>
+  <height>27</height>
+  <uuid>{554cad8b-cdf5-4612-9c9a-6d4f3f4eaa4d}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>Select what to show</label>
+  <alignment>left</alignment>
+  <font>Arial</font>
+  <fontsize>14</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
  </bsbObject>
 </bsbPanel>
 <bsbPresets>
