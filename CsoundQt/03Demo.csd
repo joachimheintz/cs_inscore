@@ -3,6 +3,10 @@
 -odac -m128
 </CsOptions>
 <CsInstruments>
+/*******
+note: this is actually a translation of the original
+demo.osc file in the inscore sources to csound code
+*******/
 
 ;make sure INScore receives OSC messages on this port
 giPort     =          7000
@@ -240,7 +244,7 @@ ix2        StrayGetNum Smsg, 5
 iy2        StrayGetNum Smsg, 6
 ix3        StrayGetNum Smsg, 7 
 iy3        StrayGetNum Smsg, 8
-           OSCsend    1,"",giPort, Sdest, "ssffffff", "set", "polygon", ix1, iy1, ix2, iy2, ix3, iy3
+           OSCsend    1,"", giPort, Sdest, "ssffffff", "set", "polygon", ix1, iy1, ix2, iy2, ix3, iy3
            turnoff
 endin
 
@@ -643,34 +647,74 @@ i 1 56.123 . "/ITL defaultShow 1"
 <bsbPanel>
  <label>Widgets</label>
  <objectName/>
- <x>72</x>
- <y>179</y>
- <width>400</width>
- <height>200</height>
+ <x>121</x>
+ <y>270</y>
+ <width>453</width>
+ <height>152</height>
  <visible>true</visible>
  <uuid/>
- <bgcolor mode="nobackground">
-  <r>231</r>
-  <g>46</g>
-  <b>255</b>
+ <bgcolor mode="background">
+  <r>255</r>
+  <g>170</g>
+  <b>0</b>
  </bgcolor>
- <bsbObject version="2" type="BSBVSlider">
-  <objectName>slider1</objectName>
-  <x>5</x>
-  <y>5</y>
-  <width>20</width>
-  <height>100</height>
-  <uuid>{852b0e8c-48e5-4bea-99df-3bd823a22197}</uuid>
+ <bsbObject version="2" type="BSBLabel">
+  <objectName/>
+  <x>25</x>
+  <y>4</y>
+  <width>387</width>
+  <height>38</height>
+  <uuid>{2b129b39-93ca-48a3-9a33-9dbabe9818ef}</uuid>
   <visible>true</visible>
   <midichan>0</midichan>
-  <midicc>-3</midicc>
-  <minimum>0.00000000</minimum>
-  <maximum>1.00000000</maximum>
-  <value>0.00000000</value>
-  <mode>lin</mode>
-  <mouseControl act="jump">continuous</mouseControl>
-  <resolution>-1.00000000</resolution>
-  <randomizable group="0">false</randomizable>
+  <midicc>0</midicc>
+  <label>03Demo</label>
+  <alignment>center</alignment>
+  <font>Arial</font>
+  <fontsize>25</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
+ </bsbObject>
+ <bsbObject version="2" type="BSBDisplay">
+  <objectName>show_message</objectName>
+  <x>25</x>
+  <y>46</y>
+  <width>387</width>
+  <height>71</height>
+  <uuid>{61f2f5b5-0237-4515-a60c-c8b9775d8e15}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>Please start Inscore first. Then run this file and watch the Inscore panel.</label>
+  <alignment>left</alignment>
+  <font>Arial</font>
+  <fontsize>20</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>border</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
  </bsbObject>
 </bsbPanel>
 <bsbPresets>

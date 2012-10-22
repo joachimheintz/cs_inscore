@@ -1,135 +1,97 @@
 <CsoundSynthesizer>
 <CsOptions>
--odac -m128
+-odac -m128 
 </CsOptions>
 <CsInstruments>
-/*
-NOTE: as at present Csound's OSCsend opcode is rather unflexible, the combination 
-*/
+ksmps = 128
 
 ;set send port
 giSendPort =          7000 ;from Csound to Inscore
 
 ;a sine wave table
-giSine ftgen 0, 0, 1024, 10, 1
-
-  opcode ythsba, S, iiiiii
-  ;returns a string with the type string at first position and following the six parameters
-  ;e.g. "sfffff y 0.02 0.001 0.999 0.999 0.999"
-iy, it, ih, is, ib, ia xin ;1 or 0
-Stype = "s" ;a "set" message will be in first place
-;y
-if iy == 1 then
-Stype strcat Stype, "s"
-Sy = "y"
-else 
-Stype strcat Stype, "f"
-Sy = "0.001"
-endif
-;t
-if it == 1 then
-Stype strcat Stype, "s"
-St = "t"
-else 
-Stype strcat Stype, "f"
-St = "0.02"
-endif
-;h
-if ih == 1 then
-Stype strcat Stype, "s"
-Sh = "h"
-else 
-Stype strcat Stype, "f"
-Sh = "0.001"
-endif
-;s
-if is == 1 then
-Stype strcat Stype, "s"
-Ss = "s"
-else 
-Stype strcat Stype, "f"
-Ss = "0.999"
-endif
-;b
-if ib == 1 then
-Stype strcat Stype, "s"
-Sb = "b"
-else 
-Stype strcat Stype, "f"
-Sb = "0.999"
-endif
-;a
-if ia == 1 then
-Stype strcat Stype, "s"
-Sa = "a"
-else 
-Stype strcat Stype, "f"
-Sa = "0.999"
-endif
-Sout sprintf "%s %s %s %s %s %s %s", Stype, Sy, St, Sh, Ss, Sb, Sa
-xout Sout
-  endop
-  
-  opcode ythsba_to_prms, iiiiii, S
-  ;from the ythsba output to the 
-  
-  endop
+giSine     ftgen      0, 0, 1024, 10, 1
 
   instr RunIsFun
+;initialise
+           event_i    "i", "SetInit", 0, 1
+           
+;receive GUI input
+gkFreq     invalue    "freq"
+gkAmp      invalue    "amp"
+kStart     invalue    "start"
+ky         invalue    "y"
+kt         invalue    "t"
+kh         invalue    "h"
+ks         invalue    "s"
+kb         invalue    "b"
+ka         invalue    "a"
+
+;start / stop sinus according to gui input
+kStartStop changed    kStart
+  if kStartStop == 1 then
+    if kStart == 1 then
+           event      "i", "Sinus", 0, p3
+           else
+           turnoff2   "Sinus", 0, 0
+    endif
+  endif
+
+;signal control change
+kSigCC     changed    ky, kt, kh, ks, kb, ka
+kTrig      init       0
+  if kSigCC == 1 then
+kTrig      =          kTrig + 1
+    if ky == 1 then
+           OSCsend    kTrig, "", giSendPort, "/ITL/scene/signal/sig", "ssfffff", "set", "y", 0.02, 0.001, 0.999, 0.999, 0.999
+    elseif kt == 1 then
+           OSCsend    kTrig, "", giSendPort, "/ITL/scene/signal/sig", "sfsffff", "set", 0.001, "t", 0.001, 0.999, 0.999, 0.999
+    elseif kh == 1 then
+           OSCsend    kTrig, "", giSendPort, "/ITL/scene/signal/sig", "sffsfff", "set", 0.001, 0.1, "h", 0.999, 0.999, 0.999
+    elseif ks == 1 then
+           OSCsend    kTrig, "", giSendPort, "/ITL/scene/signal/sig", "sfffsff", "set", 0.001, 0.1, 0.001, "s", 0.999, 0.999
+    elseif kb == 1 then
+           OSCsend    kTrig, "", giSendPort, "/ITL/scene/signal/sig", "sffffsf", "set", 0.001, 0.1, 0.001, 0.999, "b", 0.999
+    elseif ka == 1 then
+           OSCsend    kTrig, "", giSendPort, "/ITL/scene/signal/sig", "sfffffs", "set", 0.001, 0.1, 0.001, 0.999, 0.999, "a"
+           else       ;reset
+           OSCsend    kTrig, "", giSendPort, "/ITL/scene/signal/sig", "sffffff", "set", 0.001, 0.02, 0.001, 0.999, 0.999, 0.999
+    endif
+  endif
+  endin
+
+  instr SetInit
 ;load sinus.inscore file
 SrootPath  pwd
            OSCsend    1,"", giSendPort, "/ITL", "ss", "rootPath", SrootPath
            OSCsend    1,"", giSendPort, "/ITL", "ss", "load", "sinus.inscore"
-;receive GUI input
-gkFreq invalue "freq"
-gkAmp invalue "amp"
-kStart invalue "start"
-;start / stop sinus according to gui input
-kStartStop changed kStart
-if kStartStop == 1 then
- if kStart == 1 then
- event "i", "Sinus", 0, p3
- else	
- turnoff2 "Sinus", 0, 0
- endif
-endif
+           turnoff2   "Sinus", 0, 0
+           turnoff     
   endin
 
   instr Sinus
-  kSend metro 20
-kSin oscili gkAmp, gkFreq, giSine, -1
-        OSCsend kSend, "", giSendPort, "/ITL/scene/signal/[ythsba]", "f", kSin
-  endin
-
-  instr Test
-  Stype = "sffffff"
-        OSCsend 1, "", giSendPort, "/ITL/scene/signal/sig", Stype, "set", 0.001, 0.02, 0.001, 0.999, 0.999, 0.999
-        kbla init 1
-        Stest ythsba 0, 0, 1, 0, 0, 0
-        puts Stest, 1
-        turnoff
+kSend      metro      20
+kSin       oscili     gkAmp, gkFreq, giSine, -1
+           OSCsend    kSend, "", giSendPort, "/ITL/scene/signal/[ythsba]", "f", kSin
   endin
 
 </CsInstruments>
 <CsScore>
 i "RunIsFun" 0 99999
-;i "Sinus" 1 99999
-;i "Test" 0 1
 </CsScore>
 </CsoundSynthesizer>
 <bsbPanel>
  <label>Widgets</label>
  <objectName/>
- <x>351</x>
- <y>170</y>
+ <x>99</x>
+ <y>203</y>
  <width>412</width>
  <height>266</height>
  <visible>true</visible>
  <uuid/>
- <bgcolor mode="nobackground">
-  <r>231</r>
-  <g>46</g>
-  <b>255</b>
+ <bgcolor mode="background">
+  <r>255</r>
+  <g>170</g>
+  <b>0</b>
  </bgcolor>
  <bsbObject version="2" type="BSBVSlider">
   <objectName>freq</objectName>
@@ -143,7 +105,7 @@ i "RunIsFun" 0 99999
   <midicc>0</midicc>
   <minimum>0.10000000</minimum>
   <maximum>1.00000000</maximum>
-  <value>0.31600000</value>
+  <value>0.30700000</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>
@@ -170,9 +132,9 @@ i "RunIsFun" 0 99999
  </bsbObject>
  <bsbObject version="2" type="BSBLabel">
   <objectName/>
-  <x>114</x>
-  <y>7</y>
-  <width>195</width>
+  <x>25</x>
+  <y>4</y>
+  <width>387</width>
   <height>38</height>
   <uuid>{2b129b39-93ca-48a3-9a33-9dbabe9818ef}</uuid>
   <visible>true</visible>
@@ -319,7 +281,7 @@ i "RunIsFun" 0 99999
   <minimum>0.1</minimum>
   <maximum>10</maximum>
   <randomizable group="0">false</randomizable>
-  <value>0.316</value>
+  <value>0.307</value>
  </bsbObject>
  <bsbObject version="2" type="BSBSpinBox">
   <objectName>amp</objectName>
@@ -653,7 +615,7 @@ i "RunIsFun" 0 99999
   <visible>true</visible>
   <midichan>0</midichan>
   <midicc>0</midicc>
-  <label>Note: You will not see the effect of the combinations but just of the last checkbox you changed. This can prehaps be improved in the future.</label>
+  <label>Note: At present you can just see the effect of one checkbox.</label>
   <alignment>left</alignment>
   <font>Arial</font>
   <fontsize>12</fontsize>

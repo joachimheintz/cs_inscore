@@ -13,6 +13,11 @@ giErrPort  =          7002 ;error messages from Inscore
 giGetOut   OSCinit    giRecvPort
 giGetErr   OSCinit    giErrPort
 
+  instr InitMessage
+           outvalue   "show_message", "Please watch the Inscore Panel!"
+           turnoff
+  endin
+
   instr ReceiveInscoreOutput
 ;delete previous contents in /ITL/scene on localhost
 Sdelmsg    sprintf    "/ITL/scene/%s","*"
@@ -21,12 +26,24 @@ Sdelmsg    sprintf    "/ITL/scene/%s","*"
            OSCsend    1,"", giSendPort, "/ITL/scene/text", "sss", "set", "txt", "Drag file 'GetPorts.inscore'\nhere and watch\nCsound's output console!"
 ;scale (enlarge)
            OSCsend    1,"", giSendPort, "/ITL/scene/text", "sf", "scale", 4
-Sreceive   =          ""
+gSmess     =          ""
+;get message from inscore when file is dragged
 kInPort, kOutPort, kErrPort init 0
-kGotIt     OSClisten  giGetOut, "/ITL", "siii", Sreceive, kInPort, kOutPort, kErrPort
-           printf     "Message from INScore:\nIP Address =  %s\nInput Port =  %d\nOutput Port =  %d\nError Port =  %d\n", kGotIt, Sreceive, kInPort, kOutPort, kErrPort
+kGotIt     OSClisten  giGetOut, "/ITL", "siii", gSmess, kInPort, kOutPort, kErrPort
+;call subinstruments to continue
+           schedkwhennamed kGotIt, 0, 1, "ShowOutputMessage", 0, p3, kInPort, kOutPort, kErrPort
+           schedkwhennamed kGotIt, 0, 1, "ReceiveInscoreErrors", 0, p3, kInPort, kOutPort, kErrPort
+;turn off this instrument
+  if kGotIt == 1 then
+           turnoff
+  endif
+  endin
 
-           schedkwhennamed kGotIt, 0, 1, "ReceiveInscoreErrors", 0, p3
+  instr ShowOutputMessage
+Smess      sprintf    "Message from Inscore:\nIP Address =  %s\nInput Port =  %d\nOutput Port =  %d\nError Port =  %d\n", gSmess, p4, p5, p6
+           outvalue   "show_message", Smess
+           puts       Smess, 1
+           turnoff
   endin
 
   instr ReceiveInscoreErrors
@@ -37,47 +54,130 @@ Sdelmsg    sprintf    "/ITL/scene/%s","*"
            OSCsend    1,"", giSendPort, "/ITL/scene/text", "sss", "set", "txt", "Now drag file\n'GetError.inscore'\nhere and watch\nCsound's output console!"
 ;scale (enlarge)
            OSCsend    1,"", giSendPort, "/ITL/scene/text", "sf", "scale", 4
-Serror     =          "error"
-Sreceive   =          ""
-kGotIt     OSClisten  giGetErr, "/ITL", "ss", Serror, Sreceive
-           printf     "Error message from INScore:\n%s\n%s", kGotIt, Serror, Sreceive
+gSerror1   =          ""
+gSerror2   =          ""
+kGotIt     OSClisten  giGetErr, "/ITL", "ss", gSerror1, gSerror2
+;call subinstrument to show error message
+           schedkwhennamed kGotIt, 0, 1, "ShowErrorMessage", 0, p3
+;turn off this instrument
+  if kGotIt == 1 then
+           turnoff
+  endif
   endin
+  
+  instr ShowErrorMessage
+Smess      sprintf    "Error message from Inscore:\n%s\n%s", gSerror1, gSerror2
+           outvalue   "show_message", Smess
+           puts       Smess, 1
+           turnoff
+  endin
+  
 </CsInstruments>
 <CsScore>
-i "ReceiveInscoreOutput" 0 100
+i "InitMessage" 0 1
+i "ReceiveInscoreOutput" 0 99999
 </CsScore>
 </CsoundSynthesizer>
 <bsbPanel>
  <label>Widgets</label>
  <objectName/>
- <x>72</x>
- <y>179</y>
- <width>400</width>
- <height>200</height>
+ <x>0</x>
+ <y>30</y>
+ <width>434</width>
+ <height>268</height>
  <visible>true</visible>
  <uuid/>
- <bgcolor mode="nobackground">
-  <r>231</r>
-  <g>46</g>
-  <b>255</b>
+ <bgcolor mode="background">
+  <r>255</r>
+  <g>170</g>
+  <b>0</b>
  </bgcolor>
- <bsbObject version="2" type="BSBVSlider">
-  <objectName>slider1</objectName>
-  <x>5</x>
-  <y>5</y>
-  <width>20</width>
-  <height>100</height>
-  <uuid>{852b0e8c-48e5-4bea-99df-3bd823a22197}</uuid>
+ <bsbObject version="2" type="BSBLabel">
+  <objectName/>
+  <x>25</x>
+  <y>4</y>
+  <width>387</width>
+  <height>38</height>
+  <uuid>{2b129b39-93ca-48a3-9a33-9dbabe9818ef}</uuid>
   <visible>true</visible>
   <midichan>0</midichan>
-  <midicc>-3</midicc>
-  <minimum>0.00000000</minimum>
-  <maximum>1.00000000</maximum>
-  <value>0.00000000</value>
-  <mode>lin</mode>
-  <mouseControl act="jump">continuous</mouseControl>
-  <resolution>-1.00000000</resolution>
-  <randomizable group="0">false</randomizable>
+  <midicc>0</midicc>
+  <label>02Receive</label>
+  <alignment>center</alignment>
+  <font>Arial</font>
+  <fontsize>25</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
+ </bsbObject>
+ <bsbObject version="2" type="BSBDisplay">
+  <objectName>show_message</objectName>
+  <x>25</x>
+  <y>46</y>
+  <width>386</width>
+  <height>150</height>
+  <uuid>{61f2f5b5-0237-4515-a60c-c8b9775d8e15}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>Please start Inscore first. Then run this file and watch the Inscore panel.</label>
+  <alignment>left</alignment>
+  <font>Arial</font>
+  <fontsize>20</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>border</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
+ </bsbObject>
+ <bsbObject version="2" type="BSBLabel">
+  <objectName/>
+  <x>25</x>
+  <y>213</y>
+  <width>387</width>
+  <height>53</height>
+  <uuid>{bdd09977-80f2-47ed-9d2c-122d6cf1a388}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>Note: Receiving the error message will probably not yet work in this version.</label>
+  <alignment>left</alignment>
+  <font>Arial</font>
+  <fontsize>12</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
  </bsbObject>
 </bsbPanel>
 <bsbPresets>
