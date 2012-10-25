@@ -297,10 +297,10 @@ i "RunForLive" 0 99999
 <bsbPanel>
  <label>Widgets</label>
  <objectName/>
- <x>171</x>
- <y>303</y>
- <width>484</width>
- <height>588</height>
+ <x>0</x>
+ <y>0</y>
+ <width>501</width>
+ <height>607</height>
  <visible>true</visible>
  <uuid/>
  <bgcolor mode="background">
@@ -1118,9 +1118,9 @@ i "RunForLive" 0 99999
    <b>0</b>
   </color>
   <bgcolor mode="nobackground">
-   <r>232</r>
-   <g>232</g>
-   <b>232</b>
+   <r>206</r>
+   <g>206</g>
+   <b>206</b>
   </bgcolor>
   <background>nobackground</background>
  </bsbObject>
@@ -1232,6 +1232,35 @@ Click on 'Random Show' for an example of automatic transformations.</label>
   <alignment>left</alignment>
   <font>Arial</font>
   <fontsize>14</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
+ </bsbObject>
+ <bsbObject version="2" type="BSBLabel">
+  <objectName/>
+  <x>-15</x>
+  <y>570</y>
+  <width>516</width>
+  <height>37</height>
+  <uuid>{acf74984-f17d-4f66-89e8-2b8e871ccc7a}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>PLEASE USE CSOUND 5.18 OR HIGHER!</label>
+  <alignment>center</alignment>
+  <font>Arial</font>
+  <fontsize>25</fontsize>
   <precision>3</precision>
   <color>
    <r>0</r>

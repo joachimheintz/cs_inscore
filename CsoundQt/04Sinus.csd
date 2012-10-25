@@ -82,10 +82,10 @@ i "RunIsFun" 0 99999
 <bsbPanel>
  <label>Widgets</label>
  <objectName/>
- <x>99</x>
- <y>203</y>
+ <x>0</x>
+ <y>0</y>
  <width>412</width>
- <height>266</height>
+ <height>357</height>
  <visible>true</visible>
  <uuid/>
  <bgcolor mode="background">
@@ -105,7 +105,7 @@ i "RunIsFun" 0 99999
   <midicc>0</midicc>
   <minimum>0.10000000</minimum>
   <maximum>1.00000000</maximum>
-  <value>0.30700000</value>
+  <value>0.10000000</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>
@@ -219,7 +219,7 @@ i "RunIsFun" 0 99999
   <midicc>0</midicc>
   <minimum>0.01000000</minimum>
   <maximum>1.00000000</maximum>
-  <value>0.36640000</value>
+  <value>0.01000000</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>
@@ -619,6 +619,35 @@ i "RunIsFun" 0 99999
   <alignment>left</alignment>
   <font>Arial</font>
   <fontsize>12</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
+ </bsbObject>
+ <bsbObject version="2" type="BSBLabel">
+  <objectName/>
+  <x>27</x>
+  <y>275</y>
+  <width>383</width>
+  <height>82</height>
+  <uuid>{acf74984-f17d-4f66-89e8-2b8e871ccc7a}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>PLEASE USE CSOUND 5.18 OR HIGHER!</label>
+  <alignment>center</alignment>
+  <font>Arial</font>
+  <fontsize>25</fontsize>
   <precision>3</precision>
   <color>
    <r>0</r>

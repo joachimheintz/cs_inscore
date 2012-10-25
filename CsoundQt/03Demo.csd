@@ -647,10 +647,10 @@ i 1 56.123 . "/ITL defaultShow 1"
 <bsbPanel>
  <label>Widgets</label>
  <objectName/>
- <x>121</x>
- <y>270</y>
- <width>453</width>
- <height>152</height>
+ <x>0</x>
+ <y>0</y>
+ <width>412</width>
+ <height>206</height>
  <visible>true</visible>
  <uuid/>
  <bgcolor mode="background">
@@ -713,6 +713,35 @@ i 1 56.123 . "/ITL defaultShow 1"
    <b>255</b>
   </bgcolor>
   <bordermode>border</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
+ </bsbObject>
+ <bsbObject version="2" type="BSBLabel">
+  <objectName/>
+  <x>25</x>
+  <y>124</y>
+  <width>383</width>
+  <height>82</height>
+  <uuid>{acf74984-f17d-4f66-89e8-2b8e871ccc7a}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>PLEASE USE CSOUND 5.18 OR HIGHER!</label>
+  <alignment>center</alignment>
+  <font>Arial</font>
+  <fontsize>25</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>

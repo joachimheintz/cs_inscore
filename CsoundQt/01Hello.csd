@@ -31,8 +31,8 @@ i "Hello" 0 1
  <objectName/>
  <x>0</x>
  <y>30</y>
- <width>423</width>
- <height>133</height>
+ <width>440</width>
+ <height>270</height>
  <visible>true</visible>
  <uuid/>
  <bgcolor mode="background">
@@ -95,6 +95,35 @@ i "Hello" 0 1
    <b>255</b>
   </bgcolor>
   <bordermode>border</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
+ </bsbObject>
+ <bsbObject version="2" type="BSBLabel">
+  <objectName/>
+  <x>25</x>
+  <y>124</y>
+  <width>383</width>
+  <height>82</height>
+  <uuid>{acf74984-f17d-4f66-89e8-2b8e871ccc7a}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>PLEASE USE CSOUND 5.18 OR HIGHER!</label>
+  <alignment>center</alignment>
+  <font>Arial</font>
+  <fontsize>25</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
   <borderradius>1</borderradius>
   <borderwidth>1</borderwidth>
  </bsbObject>
