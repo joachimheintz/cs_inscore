@@ -8,6 +8,15 @@ ksmps = 128
 ;make sure INScore receives OSC messages on this port
 giSendPort =          7000
 
+;refresh rate for view (Hz)
+giRefresh  =          10
+
+;who has been the last selected (for RandomShow)
+gkLast     init       0
+
+;random seed from internal clock
+           seed       0
+
   opcode StrLineBreak, S, Si
 ;inserts line breaks after iNum characters in the input string
 String, iNum xin
@@ -26,15 +35,32 @@ Sres       strcat     Sres, String
            xout       Sres
   endop
 
+  opcode DirUp, S, S
+  ;returns the directory above the current directory
+SCurDir    xin
+;make sure the input does not end with '/'
+ilen       strlen     SCurDir
+ipos       strrindex  SCurDir, "/"
+ if ipos == ilen-1 then
+Sok        strsub     SCurDir, 0, ipos
+ else	
+Sok        strcpy     SCurDir
+ endif
+ipos       strrindex  Sok, "/"
+SUpDir     strsub     Sok, 0, ipos
+           xout       SUpDir
+  endop
+
 
   instr RunForLive
-  
+
 ;delete previous contents in /ITL/scene on localhost
 Sdelmsg    sprintf    "/ITL/scene/%s","*"
            OSCsend    1,"", giSendPort, Sdelmsg, "s", "del"
-           
+
 ;set root path
-gSrootPath pwd
+Swd        pwd
+gSrootPath DirUp      Swd
            OSCsend    1,"", giSendPort, "/ITL", "ss", "rootPath", gSrootPath
 
 ;receive GUI input for transformations
@@ -102,7 +128,7 @@ kScoreChng changed    kScore
   endif
 
 ;send the transformations to the Transform instrument
-kMetro     metro      10 ;refresh rate
+kMetro     metro      giRefresh
   if kMetro == 1 then
     if kText == 1 then
            event      "i", "Transform", 0, 1, 1
@@ -114,10 +140,23 @@ kMetro     metro      10 ;refresh rate
            event      "i", "Transform", 0, 1, 3
     endif
   endif
+
+;trigger or stop RandomShow instrument
+kRandomShow invalue   "randomshow"
+kRandShwChng changed  kRandomShow
+  if kRandShwChng == 1 then
+    if kRandomShow == 1 then
+           event      "i", "RandomShow", 0, p3
+    else
+           turnoff2   "RandomShow", 0, 0
+    endif
+  endif
+
   endin
 
   instr Text
            OSCsend    1,"", giSendPort, "/ITL/scene/txt", "sss", "set", "txt", gSText
+gkLast     =          1
            turnoff
   endin
 
@@ -127,7 +166,8 @@ kMetro     metro      10 ;refresh rate
   endin
 
   instr Image
-           OSCsend    1,"", giSendPort, "/ITL/scene/img", "sss", "set", "img", "../rsrc/csconf.jpg"
+           OSCsend    1,"", giSendPort, "/ITL/scene/img", "sss", "set", "img", "./rsrc/csconf.jpg"
+gkLast     =          2
            turnoff
   endin
 
@@ -137,7 +177,8 @@ kMetro     metro      10 ;refresh rate
   endin
 
   instr Score
-           OSCsend    1,"", giSendPort, "/ITL/scene/sco", "sss", "set", "gmnf", "../rsrc/1voice-846_2f.gmn"
+           OSCsend    1,"", giSendPort, "/ITL/scene/sco", "sss", "set", "gmnf", "./rsrc/1voice-846_2f.gmn"
+gkLast     =          3
            turnoff
   endin
 
@@ -180,19 +221,86 @@ Starget    =          "/ITL/scene/sco"
            turnoff
   endin
 
+  instr RandomShow
+
+;scale is different according to selected input
+  ;text
+  if gkLast == 1 then
+kScaleMin  =          3
+kScaleMax  =          7
+  ;image
+  elseif gkLast == 2 then
+kScaleMin  =          .5
+kScaleMax  =          2
+  ;score
+  else
+kScaleMin  =          1
+kScaleMax  =          3
+  endif
+
+;values independent from input
+iXMin      =          -1
+iXMax      =          1
+iYMin      =          -1
+iYMax      =          1
+iRotXMin   =          -180
+iRotXMax   =          180
+iRotYMin   =          -180
+iRotYMax   =          180
+iRotZMin   =          -180
+iRotZMax   =          180
+iShXMin    =          -.5
+iShXMax    =          .5
+iShYMin    =          -.5
+iShYMax    =          .5
+
+;get previous state
+iPrevScale chnget     "scale"
+iPrevX     chnget     "x"
+iPrevY     chnget     "y"
+iPrevRotX  chnget     "rotatex"
+iPrevRotY  chnget     "rotatey"
+iPrevRotZ  chnget     "rotatez"
+iPrevShX   chnget     "shearx"
+iPrevShY   chnget     "sheary"
+
+;calculate random movement
+kScale     randomi    kScaleMin, kScaleMax, .1, 2, iPrevScale
+kX         randomi    iXMin, iXMax, .2, 2, iPrevX
+kY         randomi    iYMin, iYMax, .2, 2, iPrevY
+kRotateX   randomi    iRotXMin, iRotXMax, .2, 2, iPrevRotX
+kRotateY   randomi    iRotYMin, iRotYMax, .2, 2, iPrevRotY
+kRotateZ   randomi    iRotZMin, iRotZMax, .2, 2, iPrevRotZ
+kShearX    randomi    iShXMin, iShXMax, .1, 2, iPrevShX
+kShearY    randomi    iShYMin, iShYMax, .1, 2, iPrevShY
+
+;output values in refresh rate
+kTrig      metro      giRefresh
+  if kTrig == 1 then
+           outvalue   "scale", kScale
+           outvalue   "x", kX
+           outvalue   "y", kY
+           outvalue   "rotatex", kRotateX
+           outvalue   "rotatey", kRotateY
+           outvalue   "rotatez", kRotateZ
+           outvalue   "shearx", kShearX
+           outvalue   "sheary", kShearY
+  endif
+  endin
 
 </CsInstruments>
 <CsScore>
 i "RunForLive" 0 99999
 </CsScore>
 </CsoundSynthesizer>
+
 <bsbPanel>
  <label>Widgets</label>
  <objectName/>
- <x>213</x>
- <y>127</y>
- <width>505</width>
- <height>536</height>
+ <x>171</x>
+ <y>303</y>
+ <width>484</width>
+ <height>588</height>
  <visible>true</visible>
  <uuid/>
  <bgcolor mode="background">
@@ -662,7 +770,7 @@ i "RunForLive" 0 99999
   <minimum>0</minimum>
   <maximum>10</maximum>
   <randomizable group="0">false</randomizable>
-  <value>1</value>
+  <value>1.66836</value>
  </bsbObject>
  <bsbObject version="2" type="BSBSpinBox">
   <objectName>x</objectName>
@@ -839,7 +947,7 @@ i "RunForLive" 0 99999
   <midicc>0</midicc>
   <minimum>0.10000000</minimum>
   <maximum>2.00000000</maximum>
-  <value>1.00000000</value>
+  <value>1.66836364</value>
   <mode>lin</mode>
   <mouseControl act="jump">continuous</mouseControl>
   <resolution>-1.00000000</resolution>
@@ -999,7 +1107,7 @@ i "RunForLive" 0 99999
   <visible>true</visible>
   <midichan>0</midichan>
   <midicc>0</midicc>
-  <label>Type your text here</label>
+  <label>Type your text here </label>
   <alignment>left</alignment>
   <font>Arial</font>
   <fontsize>14</fontsize>
@@ -1010,9 +1118,9 @@ i "RunForLive" 0 99999
    <b>0</b>
   </color>
   <bgcolor mode="nobackground">
-   <r>206</r>
-   <g>206</g>
-   <b>206</b>
+   <r>232</r>
+   <g>232</g>
+   <b>232</b>
   </bgcolor>
   <background>nobackground</background>
  </bsbObject>
@@ -1071,6 +1179,56 @@ i "RunForLive" 0 99999
   <midichan>0</midichan>
   <midicc>0</midicc>
   <label>Select what to show</label>
+  <alignment>left</alignment>
+  <font>Arial</font>
+  <fontsize>14</fontsize>
+  <precision>3</precision>
+  <color>
+   <r>0</r>
+   <g>0</g>
+   <b>0</b>
+  </color>
+  <bgcolor mode="nobackground">
+   <r>255</r>
+   <g>255</g>
+   <b>255</b>
+  </bgcolor>
+  <bordermode>noborder</bordermode>
+  <borderradius>1</borderradius>
+  <borderwidth>1</borderwidth>
+ </bsbObject>
+ <bsbObject version="2" type="BSBButton">
+  <objectName>randomshow</objectName>
+  <x>196</x>
+  <y>123</y>
+  <width>112</width>
+  <height>26</height>
+  <uuid>{04e5278a-1c60-4e71-a34e-2d7e9c296934}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <type>value</type>
+  <pressedValue>1.00000000</pressedValue>
+  <stringvalue/>
+  <text>Random Show</text>
+  <image>/</image>
+  <eventLine>i "ClearImage" 0 1</eventLine>
+  <latch>true</latch>
+  <latched>false</latched>
+ </bsbObject>
+ <bsbObject version="2" type="BSBLabel">
+  <objectName/>
+  <x>23</x>
+  <y>423</y>
+  <width>435</width>
+  <height>140</height>
+  <uuid>{4b18f1f9-5fd6-4435-9a45-a425a7d8dba8}</uuid>
+  <visible>true</visible>
+  <midichan>0</midichan>
+  <midicc>0</midicc>
+  <label>Click on 'Text', 'Image' or 'Score' to see different examples for objects shown by Inscore. (The text input can be altered in real time.)
+Move the sliders to transform the view.
+Click on 'Random Show' for an example of automatic transformations.</label>
   <alignment>left</alignment>
   <font>Arial</font>
   <fontsize>14</fontsize>
