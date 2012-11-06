@@ -13,13 +13,16 @@ OVERVIEW
 01Hello - Csound sends a text to Inscore
 02Receive - Csound receives realtime messages from Inscore
 03Demo - Inscore's First Demo transformed to Csound code
-04Sinus - Csound version of the MP-graphsig-sinus example
-05ShowAndTransform - Show Text, Image or Score and transform the view
+04Sinus - Csound version of the MP-graphsig-sinus example (*)
+05ShowAndTransform - Show Text, Image or Score and transform the view (*)
+06Tables - Show Csound tables in Inscore
+07TablesInteraction - Change table content and view the changes (*)
+  (*) = CsoundQt version only
 
 *****
 USAGE
 *****
-You can use CsoundQt (http://sourceforge.net/projects/qutecsound) or run Csound (http://sourceforge.net/projects/csound) from the Command line. The examples in CsoundQt have some features the commandline version do not have (because of the widgets), and there is no commandline version for examples in which the GUI is eseential. For general information about installing Csound, see http://en.flossmanuals.net/csound/index.
+You can use CsoundQt (http://sourceforge.net/projects/qutecsound) or run Csound (http://sourceforge.net/projects/csound) from the Command line. The examples in CsoundQt have some features the commandline version do not have (because of the widgets), and there is no commandline version for examples in which the GUI is essential. For general information about installing Csound, see http://en.flossmanuals.net/csound/index.
 
 ==CsoundQt==
 Open INScore and run the examples in the 'CsoundQt' folder while watching the Inscore panel.
