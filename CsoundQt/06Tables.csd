@@ -15,6 +15,7 @@ giRnd      ftgen      0, 0, -300, 21, 3
 
   opcode TbToITL, 0, kSPjopppj
   ;let inscore show the kft function table with Sname
+  ;defaults: kTrig=1, iThick=0.02, iHue=0, iSat=1, iBright=1, iTransp=1
 kft, Sname, kTrig, iThick, iHue, iSat, iBright, iTransp, iSendPort  xin
 
 ;standard OSC port for sending messages from Csound to Inscore is 7000
@@ -79,10 +80,10 @@ i "Rand" 1 1
 <bsbPanel>
  <label>Widgets</label>
  <objectName/>
- <x>1166</x>
- <y>82</y>
- <width>200</width>
- <height>453</height>
+ <x>121</x>
+ <y>93</y>
+ <width>449</width>
+ <height>140</height>
  <visible>true</visible>
  <uuid/>
  <bgcolor mode="background">
@@ -92,8 +93,8 @@ i "Rand" 1 1
  </bgcolor>
  <bsbObject version="2" type="BSBLabel">
   <objectName/>
-  <x>25</x>
-  <y>4</y>
+  <x>23</x>
+  <y>10</y>
   <width>387</width>
   <height>38</height>
   <uuid>{2b129b39-93ca-48a3-9a33-9dbabe9818ef}</uuid>

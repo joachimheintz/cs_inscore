@@ -9,9 +9,6 @@ ksmps = 128
 ;set send port
 giSendPort =          7000 ;from Csound to Inscore
 
-;table with flexible curve (like transeg)
-;giCurve    ftgen      0, 0, 257, 16, 1, 256, 0, -1
-
 
   opcode TbToITL, 0, kSPjopppj
   ;let inscore show the kft function table with Sname
@@ -213,5 +210,5 @@ ioView background {65535, 43690, 0}
 ioSlider {26, 50} {319, 31} -10.000000 10.000000 -2.539185 curve
 ioText {25, 4} {387, 38} label 0.000000 0.00100 "" center "Arial" 25 {0, 0, 0} {52736, 52736, 52736} nobackground noborder 07TablesInteraction
 ioText {26, 85} {387, 53} label 0.000000 0.00100 "" left "Arial" 14 {0, 0, 0} {52736, 52736, 52736} nobackground noborder Start Csound and watch the /ITL/Table_Curve panel
-ioText {353, 50} {59, 32} display -2.539185 0.00100 "curve" right "Arial" 16 {0, 0, 0} {52736, 52736, 52736} nobackground noborder -2.539
+ioText {353, 50} {59, 32} display -2.539000 0.00100 "curve" right "Arial" 16 {0, 0, 0} {52736, 52736, 52736} nobackground noborder -2.539
 </MacGUI>
