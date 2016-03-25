@@ -1,3 +1,11 @@
+The examples are now included in the Inscore sources:
+https://sourceforge.net/p/inscore/code/ci/master/tree/interfaces/Csound or
+https://sourceforge.net/p/inscore/code/ci/dev/tree/interfaces/Csound
+
+I keep this repository for now without updating.
+
+
+
 Inscore - Csound - Examples
 Joachim Heintz, October 2012
 jh at joachimheintz.de
